@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.daliny.app",
+        "sha256_cert_fingerprints": ["C0:63:81:5A:EA:7B:A0:62:96:4B:07:AB:76:08:08:AD:DA:00:83:BE:B2:CB:59:E0:14:A3:6C:07:B0:DD:55:91"]
+      }
+    }]
