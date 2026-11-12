@@ -1,0 +1,220 @@
+{
+ "id": "hilla-debug",
+ "name": "تجربة الحلة",
+ "bbox": [
+  44.38,
+  32.43,
+  44.48,
+  32.53
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": true,
+ "source_show": "pmtiles spec version: 3\ntile type: mvt\nbounds: (long: -180.000000, lat: -85.051129) (long: 180.000000, lat: 85.051129)\nmin zoom: 0\nmax zoom: 14\ncenter: (long: 0.000000, lat: 0.000000)\ncenter zoom: 0\naddressed tiles count: 16068537\ntile entries count: 16068537\ntile contents count: 16068537\nclustered: true\ninternal compression: gzip\ntile compression: gzip\nvector_layers <object, use --metadata to view full JSON metadata>\nattribution <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">&copy; OpenStreetMap</a> <a href=\"https://docs.overturemaps.org/attribution\" target=\"_blank\">&copy; Overture Maps Foundation</a>\ndescription tiles.version=1.1.4\nname Overture buildings\nplanetiler:buildtime 2026-03-28T14:35:36.815Z\nplanetiler:githash 0e5588c4a6e8c29a270a33afe8df62027d889604\nplanetiler:version 0.10.2\ntype overlay\nweb viewer: https://pmtiles.io/#url=https%3A%2F%2Foverturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com%2Ftiles%2F2026-10-21.0%2Fbuildings.pmtiles\n",
+ "raw_bytes": 5445974,
+ "raw_saved": true,
+ "slim": {
+  "id": "hilla-debug",
+  "release": "2026-10-21.0",
+  "bbox": [
+   44.38,
+   32.43,
+   44.48,
+   32.53
+  ],
+  "seconds": 1.2,
+  "tiles_in": 42,
+  "tiles_out": 42,
+  "zooms_seen": {
+   "14": 42
+  },
+  "layers_seen": {
+   "building": 42,
+   "building_part": 1
+  },
+  "features": {
+   "building_in": 106828,
+   "kept": 106828,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 19,
+   "height_from_floors": 21,
+   "no_height": 106788
+  },
+  "height_percentiles_m": {
+   "p10": 3,
+   "p50": 6,
+   "p90": 30,
+   "p99": 30,
+   "max": 30
+  },
+  "bytes": {
+   "raw_tiles_in": 5445127,
+   "slim_tiles_out": 1493706
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 106828,
+   "has_parts": 106828,
+   "id": 106828,
+   "@geometry_source": 106828,
+   "sources": 106828,
+   "version": 106828,
+   "facade_material": 149,
+   "subtype": 82,
+   "class": 76,
+   "@name": 40,
+   "names": 40,
+   "num_floors": 37,
+   "@height_source": 19,
+   "height": 19,
+   "level": 10,
+   "roof_shape": 8,
+   "roof_color": 1
+  },
+  "keys_sampled_features": 106828,
+  "value_types": {
+   "is_underground": {
+    "bool": 106828
+   },
+   "has_parts": {
+    "bool": 106828
+   },
+   "subtype": {
+    "str": 82
+   },
+   "class": {
+    "str": 76
+   },
+   "num_floors": {
+    "int": 37
+   },
+   "height": {
+    "float": 19
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "fcf79fa9-6162-4041-aeb0-518d4b20aa56",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "32ecd55b-6f41-4aa8-896c-e4b93318e9c1",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "691f506d-f86d-4ac2-85c8-9737332e853f",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "c913e166-94f3-49e2-b9e2-19f99309a3e2",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "6c0da048-de14-495c-ab1f-e3e83feb3e52",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b30cc7ee-0a06-4c34-8a00-3b477e300fe0",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "4af09bfa-4c2e-44bf-bee9-cdd8aea8dcf8",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "eb7c4db2-28ea-4a0d-9d96-27b8fa694249",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:53:20 verify.go:169: Completed verify in 144.27µs.\n"
+ },
+ "check": {
+  "file": "hilla-debug.pmtiles",
+  "bytes": 1494264,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   44.38,
+   32.43,
+   44.4799999,
+   32.53
+  ],
+  "header_addressed_tiles": 42,
+  "header_entries": 42,
+  "header_contents": 42,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 42,
+  "addressed_read": 42,
+  "tiles_checked": 42,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 106828,
+  "polygons_in_sample": 106828,
+  "with_h_in_sample": 40,
+  "h_max_in_sample": 30,
+  "problems": []
+ },
+ "bytes": 1494264,
+ "seconds": 3.4,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:53:20Z"
+}
