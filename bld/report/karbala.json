@@ -1,0 +1,225 @@
+{
+ "id": "karbala",
+ "name": "كربلاء",
+ "bbox": [
+  43.2,
+  32.0,
+  44.5,
+  33.0
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 40646040,
+ "slim": {
+  "id": "karbala",
+  "release": "2026-10-21.0",
+  "bbox": [
+   43.2,
+   32.0,
+   44.5,
+   33.0
+  ],
+  "seconds": 7.3,
+  "tiles_in": 1112,
+  "tiles_out": 1112,
+  "zooms_seen": {
+   "14": 1112
+  },
+  "layers_seen": {
+   "building": 1112,
+   "building_part": 17
+  },
+  "features": {
+   "building_in": 775270,
+   "kept": 775268,
+   "underground_dropped": 2,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 3468,
+   "height_from_floors": 215,
+   "no_height": 771585
+  },
+  "height_percentiles_m": {
+   "p10": 4,
+   "p50": 7,
+   "p90": 12,
+   "p99": 32,
+   "max": 60
+  },
+  "bytes": {
+   "raw_tiles_in": 40642538,
+   "slim_tiles_out": 10220443
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 349556,
+   "has_parts": 349556,
+   "id": 349556,
+   "@geometry_source": 349556,
+   "sources": 349556,
+   "version": 349556,
+   "subtype": 837,
+   "class": 771,
+   "level": 389,
+   "@name": 228,
+   "names": 228,
+   "num_floors": 166,
+   "facade_material": 156,
+   "@height_source": 147,
+   "height": 147,
+   "roof_color": 77,
+   "facade_color": 75,
+   "roof_shape": 12,
+   "min_height": 11,
+   "num_floors_underground": 2,
+   "roof_height": 1
+  },
+  "keys_sampled_features": 349556,
+  "value_types": {
+   "is_underground": {
+    "bool": 349556
+   },
+   "has_parts": {
+    "bool": 349556
+   },
+   "num_floors": {
+    "int": 166
+   },
+   "height": {
+    "float": 147
+   },
+   "subtype": {
+    "str": 837
+   },
+   "class": {
+    "str": 771
+   },
+   "min_height": {
+    "float": 11
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "08da5630-89b4-45d4-a679-d13350880f59",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "8a794ed5-f94c-4bc9-bfb5-bfd1748ee89a",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "3d6145db-2289-44d3-afc0-21b61bcbada7",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "be865dd1-82eb-4ac0-9d70-e7cdebc455e9",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "ea3faac7-e236-41b7-b262-35ff60fdf9bb",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "6042d185-6a7c-420c-b1c2-7bb02fcf61d8",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "1bbad870-39ec-4311-88d5-9ec4a7f9d0a4",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "ba90a112-22d2-41fc-83c2-38171431a6da",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:55:57 verify.go:169: Completed verify in 266.289µs.\n"
+ },
+ "check": {
+  "file": "karbala.pmtiles",
+  "bytes": 10223303,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   43.2,
+   32.0,
+   44.5,
+   33.0
+  ],
+  "header_addressed_tiles": 1112,
+  "header_entries": 1112,
+  "header_contents": 1112,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 1112,
+  "addressed_read": 1112,
+  "tiles_checked": 556,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 387833,
+  "polygons_in_sample": 387833,
+  "with_h_in_sample": 3251,
+  "h_max_in_sample": 60,
+  "problems": []
+ },
+ "bytes": 10223303,
+ "seconds": 9.8,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:55:57Z"
+}

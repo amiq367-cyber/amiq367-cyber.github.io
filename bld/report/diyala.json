@@ -1,0 +1,218 @@
+{
+ "id": "diyala",
+ "name": "ديالى",
+ "bbox": [
+  44.3,
+  33.2,
+  46.2,
+  34.7
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 76157167,
+ "slim": {
+  "id": "diyala",
+  "release": "2026-10-21.0",
+  "bbox": [
+   44.3,
+   33.2,
+   46.2,
+   34.7
+  ],
+  "seconds": 13.2,
+  "tiles_in": 2943,
+  "tiles_out": 2943,
+  "zooms_seen": {
+   "14": 2943
+  },
+  "layers_seen": {
+   "building": 2943,
+   "building_part": 40
+  },
+  "features": {
+   "building_in": 1513590,
+   "kept": 1513590,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 1093,
+   "height_from_floors": 1411,
+   "no_height": 1511086
+  },
+  "height_percentiles_m": {
+   "p10": 6,
+   "p50": 25,
+   "p90": 58,
+   "p99": 170,
+   "max": 220
+  },
+  "bytes": {
+   "raw_tiles_in": 76149507,
+   "slim_tiles_out": 18011798
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 50535,
+   "has_parts": 50535,
+   "id": 50535,
+   "@geometry_source": 50535,
+   "sources": 50535,
+   "version": 50535,
+   "subtype": 1256,
+   "class": 1200,
+   "num_floors": 324,
+   "@name": 267,
+   "names": 267,
+   "@height_source": 197,
+   "height": 197,
+   "facade_color": 159,
+   "roof_shape": 155,
+   "roof_color": 152,
+   "level": 70
+  },
+  "keys_sampled_features": 50535,
+  "value_types": {
+   "is_underground": {
+    "bool": 50535
+   },
+   "has_parts": {
+    "bool": 50535
+   },
+   "subtype": {
+    "str": 1256
+   },
+   "class": {
+    "str": 1200
+   },
+   "num_floors": {
+    "int": 324
+   },
+   "height": {
+    "float": 197
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "aac11eb8-5aee-40c0-b4fd-1325f11ca27e",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "62e33efb-1317-4a2a-97b5-4849fc9ce62f",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b870e545-2e71-45c0-8ff5-02f903bac8c3",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "e43ccad0-0c57-4cf2-a29b-2fad4500af71",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "7a02fe18-2e65-4bfa-ba33-ea0eb1083b3b",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "41753abc-05e0-48a6-be7d-474d6baae607",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "d74c0c77-d706-4ea2-adf8-617573dad665",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "d5602bdd-009e-469b-9b7a-bc95422387bc",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 1
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:55:25 verify.go:169: Completed verify in 561.653µs.\n"
+ },
+ "check": {
+  "file": "diyala.pmtiles",
+  "bytes": 18018167,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   44.3,
+   33.2,
+   46.2,
+   34.7
+  ],
+  "header_addressed_tiles": 2943,
+  "header_entries": 2943,
+  "header_contents": 2943,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 2943,
+  "addressed_read": 2943,
+  "tiles_checked": 421,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 228154,
+  "polygons_in_sample": 228154,
+  "with_h_in_sample": 603,
+  "h_max_in_sample": 220,
+  "problems": []
+ },
+ "bytes": 18018167,
+ "seconds": 16.7,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:55:26Z"
+}

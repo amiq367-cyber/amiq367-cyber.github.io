@@ -14,6 +14,261 @@
    "built_at": "2026-11-12T21:53:40Z",
    "buildings": 1609525,
    "with_height": 5105
+  },
+  "baghdad": {
+   "id": "baghdad",
+   "name": "بغداد",
+   "bbox": [
+    43.9,
+    32.8,
+    44.9,
+    33.8
+   ],
+   "bytes": 19964733,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:54:03Z",
+   "buildings": 1676063,
+   "with_height": 2901
+  },
+  "basra": {
+   "id": "basra",
+   "name": "البصرة",
+   "bbox": [
+    46.4,
+    29.05,
+    48.6,
+    31.2
+   ],
+   "bytes": 13320284,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:54:15Z",
+   "buildings": 1060722,
+   "with_height": 3407
+  },
+  "nineveh": {
+   "id": "nineveh",
+   "name": "نينوى",
+   "bbox": [
+    40.9,
+    35.2,
+    44.1,
+    37.4
+   ],
+   "bytes": 26550078,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:54:36Z",
+   "buildings": 2072361,
+   "with_height": 12805
+  },
+  "erbil": {
+   "id": "erbil",
+   "name": "أربيل",
+   "bbox": [
+    43.4,
+    35.7,
+    45.1,
+    37.2
+   ],
+   "bytes": 11218133,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:54:46Z",
+   "buildings": 873203,
+   "with_height": 10577
+  },
+  "sulaymaniyah": {
+   "id": "sulaymaniyah",
+   "name": "السليمانية",
+   "bbox": [
+    44.5,
+    34.6,
+    46.3,
+    36.3
+   ],
+   "bytes": 6951192,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:54:53Z",
+   "buildings": 522818,
+   "with_height": 2947
+  },
+  "duhok": {
+   "id": "duhok",
+   "name": "دهوك",
+   "bbox": [
+    42.2,
+    36.5,
+    44.3,
+    37.4
+   ],
+   "bytes": 7379729,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:55:00Z",
+   "buildings": 567760,
+   "with_height": 3265
+  },
+  "kirkuk": {
+   "id": "kirkuk",
+   "name": "كركوك",
+   "bbox": [
+    43.2,
+    34.8,
+    44.9,
+    35.9
+   ],
+   "bytes": 9068110,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:55:09Z",
+   "buildings": 721376,
+   "with_height": 304
+  },
+  "diyala": {
+   "id": "diyala",
+   "name": "ديالى",
+   "bbox": [
+    44.3,
+    33.2,
+    46.2,
+    34.7
+   ],
+   "bytes": 18018167,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:55:26Z",
+   "buildings": 1513590,
+   "with_height": 2504
+  },
+  "salahaddin": {
+   "id": "salahaddin",
+   "name": "صلاح الدين",
+   "bbox": [
+    42.9,
+    33.7,
+    44.5,
+    35.3
+   ],
+   "bytes": 5522821,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:55:31Z",
+   "buildings": 429002,
+   "with_height": 45
+  },
+  "anbar": {
+   "id": "anbar",
+   "name": "الأنبار",
+   "bbox": [
+    38.8,
+    30.6,
+    44.3,
+    34.8
+   ],
+   "bytes": 19477410,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:55:48Z",
+   "buildings": 1507011,
+   "with_height": 4211
+  },
+  "karbala": {
+   "id": "karbala",
+   "name": "كربلاء",
+   "bbox": [
+    43.2,
+    32.0,
+    44.5,
+    33.0
+   ],
+   "bytes": 10223303,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:55:57Z",
+   "buildings": 775268,
+   "with_height": 3683
+  },
+  "najaf": {
+   "id": "najaf",
+   "name": "النجف",
+   "bbox": [
+    42.2,
+    29.5,
+    45.0,
+    32.5
+   ],
+   "bytes": 10361436,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:56:07Z",
+   "buildings": 782113,
+   "with_height": 312
+  },
+  "qadisiyah": {
+   "id": "qadisiyah",
+   "name": "القادسية",
+   "bbox": [
+    44.3,
+    31.5,
+    45.6,
+    32.4
+   ],
+   "bytes": 8592269,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:56:15Z",
+   "buildings": 654820,
+   "with_height": 270
+  },
+  "muthanna": {
+   "id": "muthanna",
+   "name": "المثنى",
+   "bbox": [
+    43.6,
+    29.0,
+    46.2,
+    31.6
+   ],
+   "bytes": 2734722,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:56:19Z",
+   "buildings": 209893,
+   "with_height": 141
+  },
+  "dhiqar": {
+   "id": "dhiqar",
+   "name": "ذي قار",
+   "bbox": [
+    45.6,
+    30.4,
+    47.2,
+    31.9
+   ],
+   "bytes": 6921404,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:56:25Z",
+   "buildings": 517887,
+   "with_height": 440
+  },
+  "maysan": {
+   "id": "maysan",
+   "name": "ميسان",
+   "bbox": [
+    46.5,
+    31.3,
+    47.9,
+    32.8
+   ],
+   "bytes": 2811948,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:56:29Z",
+   "buildings": 212568,
+   "with_height": 194
+  },
+  "wasit": {
+   "id": "wasit",
+   "name": "واسط",
+   "bbox": [
+    44.9,
+    32.0,
+    46.9,
+    33.5
+   ],
+   "bytes": 4498521,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:56:34Z",
+   "buildings": 346217,
+   "with_height": 127
   }
  },
  "source": "Overture Maps buildings 2026-10-21.0",

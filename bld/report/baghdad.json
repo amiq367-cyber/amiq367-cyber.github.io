@@ -1,0 +1,223 @@
+{
+ "id": "baghdad",
+ "name": "بغداد",
+ "bbox": [
+  43.9,
+  32.8,
+  44.9,
+  33.8
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 83368123,
+ "slim": {
+  "id": "baghdad",
+  "release": "2026-10-21.0",
+  "bbox": [
+   43.9,
+   32.8,
+   44.9,
+   33.8
+  ],
+  "seconds": 14.6,
+  "tiles_in": 1969,
+  "tiles_out": 1969,
+  "zooms_seen": {
+   "14": 1969
+  },
+  "layers_seen": {
+   "building": 1969,
+   "building_part": 46
+  },
+  "features": {
+   "building_in": 1676063,
+   "kept": 1676063,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 1348,
+   "height_from_floors": 1553,
+   "no_height": 1673162
+  },
+  "height_percentiles_m": {
+   "p10": 6,
+   "p50": 29,
+   "p90": 58,
+   "p99": 170,
+   "max": 170
+  },
+  "bytes": {
+   "raw_tiles_in": 83362570,
+   "slim_tiles_out": 19960080
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 106381,
+   "has_parts": 106381,
+   "id": 106381,
+   "@geometry_source": 106381,
+   "sources": 106381,
+   "version": 106381,
+   "subtype": 4517,
+   "class": 4511,
+   "@height_source": 214,
+   "height": 214,
+   "num_floors": 207,
+   "@name": 113,
+   "names": 113,
+   "roof_shape": 28,
+   "level": 21,
+   "facade_color": 16,
+   "min_height": 9,
+   "min_floor": 2,
+   "roof_color": 1
+  },
+  "keys_sampled_features": 106381,
+  "value_types": {
+   "is_underground": {
+    "bool": 106381
+   },
+   "has_parts": {
+    "bool": 106381
+   },
+   "subtype": {
+    "str": 4517
+   },
+   "class": {
+    "str": 4511
+   },
+   "height": {
+    "float": 214
+   },
+   "num_floors": {
+    "int": 207
+   },
+   "min_height": {
+    "float": 9
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "95839669-9d47-4a28-8f5f-8d8262047f96",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "e03e02d6-5268-4d77-bb3b-0e42e57b9ae4",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "fc880b5f-a396-4698-92ef-4f3aab4202b3",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "c1b4a662-8181-462f-8b30-56494aa4338a",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b77e630a-3bee-47f1-a74d-79369cb01eda",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b1dd6aea-db72-4a44-9480-d4ff8cc3baba",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "7e685b01-4d2e-43a8-9026-ebba9d95adc7",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "0c481070-bbbb-43d6-8557-19e5bb17046e",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:54:02 verify.go:169: Completed verify in 520.392µs.\n"
+ },
+ "check": {
+  "file": "baghdad.pmtiles",
+  "bytes": 19964733,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   43.9,
+   32.8,
+   44.9,
+   33.8
+  ],
+  "header_addressed_tiles": 1969,
+  "header_entries": 1969,
+  "header_contents": 1969,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 1969,
+  "addressed_read": 1969,
+  "tiles_checked": 493,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 469344,
+  "polygons_in_sample": 469344,
+  "with_h_in_sample": 744,
+  "h_max_in_sample": 99,
+  "problems": []
+ },
+ "bytes": 19964733,
+ "seconds": 18.4,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:54:03Z"
+}

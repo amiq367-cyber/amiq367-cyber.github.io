@@ -1,0 +1,211 @@
+{
+ "id": "maysan",
+ "name": "ميسان",
+ "bbox": [
+  46.5,
+  31.3,
+  47.9,
+  32.8
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 11362979,
+ "slim": {
+  "id": "maysan",
+  "release": "2026-10-21.0",
+  "bbox": [
+   46.5,
+   31.3,
+   47.9,
+   32.8
+  ],
+  "seconds": 1.9,
+  "tiles_in": 1580,
+  "tiles_out": 1580,
+  "zooms_seen": {
+   "14": 1580
+  },
+  "layers_seen": {
+   "building": 1580,
+   "building_part": 1
+  },
+  "features": {
+   "building_in": 212568,
+   "kept": 212568,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 41,
+   "height_from_floors": 153,
+   "no_height": 212374
+  },
+  "height_percentiles_m": {
+   "p10": 3,
+   "p50": 6,
+   "p90": 10,
+   "p99": 90,
+   "max": 100
+  },
+  "bytes": {
+   "raw_tiles_in": 11358618,
+   "slim_tiles_out": 2808440
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 6271,
+   "has_parts": 6271,
+   "id": 6271,
+   "@geometry_source": 6271,
+   "sources": 6271,
+   "version": 6271,
+   "subtype": 6,
+   "class": 6,
+   "level": 3,
+   "num_floors": 1,
+   "@name": 1,
+   "names": 1,
+   "roof_color": 1
+  },
+  "keys_sampled_features": 6271,
+  "value_types": {
+   "is_underground": {
+    "bool": 6271
+   },
+   "has_parts": {
+    "bool": 6271
+   },
+   "num_floors": {
+    "int": 1
+   },
+   "subtype": {
+    "str": 6
+   },
+   "class": {
+    "str": 6
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "91f54686-bad6-42fe-9548-e3b1efcb4aff",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "224e2593-4b5c-4523-8a55-596c9f16f8c8",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "a11d91f3-0684-4c8f-a3f5-671cc155522f",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "5328ecf7-90e4-40e0-b5bf-b4bc8ed349c8",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "16689458-9214-47f3-847d-35a3e72d2c26",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "87be25d5-86a3-47ec-808f-104c34a5e30c",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "793b08c9-8b02-4084-9c58-d5ed20c6c46d",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "e73204be-adb3-4ba5-8a99-32ddf5ac7432",
+    "@geometry_source": "OpenStreetMap",
+    "sources": "...",
+    "version": 1
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:56:29 verify.go:169: Completed verify in 264.685µs.\n"
+ },
+ "check": {
+  "file": "maysan.pmtiles",
+  "bytes": 2811948,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   46.5,
+   31.3,
+   47.9,
+   32.8
+  ],
+  "header_addressed_tiles": 1580,
+  "header_entries": 1580,
+  "header_contents": 1580,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 1580,
+  "addressed_read": 1580,
+  "tiles_checked": 527,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 69910,
+  "polygons_in_sample": 69910,
+  "with_h_in_sample": 62,
+  "h_max_in_sample": 90,
+  "problems": []
+ },
+ "bytes": 2811948,
+ "seconds": 3.7,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:56:29Z"
+}

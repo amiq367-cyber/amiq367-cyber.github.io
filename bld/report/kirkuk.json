@@ -1,0 +1,209 @@
+{
+ "id": "kirkuk",
+ "name": "كركوك",
+ "bbox": [
+  43.2,
+  34.8,
+  44.9,
+  35.9
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 37163610,
+ "slim": {
+  "id": "kirkuk",
+  "release": "2026-10-21.0",
+  "bbox": [
+   43.2,
+   34.8,
+   44.9,
+   35.9
+  ],
+  "seconds": 6.3,
+  "tiles_in": 2799,
+  "tiles_out": 2799,
+  "zooms_seen": {
+   "14": 2799
+  },
+  "layers_seen": {
+   "building": 2799,
+   "building_part": 1
+  },
+  "features": {
+   "building_in": 721376,
+   "kept": 721376,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 115,
+   "height_from_floors": 189,
+   "no_height": 721072
+  },
+  "height_percentiles_m": {
+   "p10": 3,
+   "p50": 10,
+   "p90": 10,
+   "p99": 19,
+   "max": 40
+  },
+  "bytes": {
+   "raw_tiles_in": 37156527,
+   "slim_tiles_out": 9062235
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 33439,
+   "has_parts": 33439,
+   "id": 33439,
+   "@geometry_source": 33439,
+   "sources": 33439,
+   "version": 33439,
+   "@name": 55,
+   "names": 55,
+   "subtype": 48,
+   "class": 39,
+   "num_floors": 1
+  },
+  "keys_sampled_features": 33439,
+  "value_types": {
+   "is_underground": {
+    "bool": 33439
+   },
+   "has_parts": {
+    "bool": 33439
+   },
+   "subtype": {
+    "str": 48
+   },
+   "class": {
+    "str": 39
+   },
+   "num_floors": {
+    "int": 1
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "d6437902-a980-4b4c-99ae-b6eaceeb18ed",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "403799e5-ae25-4870-b131-9fa84abe0d43",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "7b19af18-5237-44b4-993e-00a6992802ad",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "7f618168-9fbf-47e6-877e-670a0de92d69",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "78b1a09b-a2e1-4424-ab9f-a4b13f1b30ca",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "7a73791b-5364-44cf-bfd1-e26c1560c6d6",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "e9ef558a-fb8f-47a1-af11-c063ea37ea91",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "ef7a756f-e115-4f13-8125-66af2636a71a",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:55:09 verify.go:169: Completed verify in 485.752µs.\n"
+ },
+ "check": {
+  "file": "kirkuk.pmtiles",
+  "bytes": 9068110,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   43.2,
+   34.8,
+   44.9,
+   35.9
+  ],
+  "header_addressed_tiles": 2799,
+  "header_entries": 2799,
+  "header_contents": 2799,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 2799,
+  "addressed_read": 2799,
+  "tiles_checked": 467,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 116549,
+  "polygons_in_sample": 116549,
+  "with_h_in_sample": 64,
+  "h_max_in_sample": 13,
+  "problems": []
+ },
+ "bytes": 9068110,
+ "seconds": 8.5,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:55:09Z"
+}

@@ -1,0 +1,214 @@
+{
+ "id": "basra",
+ "name": "البصرة",
+ "bbox": [
+  46.4,
+  29.05,
+  48.6,
+  31.2
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 56348802,
+ "slim": {
+  "id": "basra",
+  "release": "2026-10-21.0",
+  "bbox": [
+   46.4,
+   29.05,
+   48.6,
+   31.2
+  ],
+  "seconds": 9.4,
+  "tiles_in": 3194,
+  "tiles_out": 3194,
+  "zooms_seen": {
+   "14": 3194
+  },
+  "layers_seen": {
+   "building": 3194,
+   "building_part": 31
+  },
+  "features": {
+   "building_in": 1060722,
+   "kept": 1060722,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 1726,
+   "height_from_floors": 1681,
+   "no_height": 1057315
+  },
+  "height_percentiles_m": {
+   "p10": 3,
+   "p50": 8,
+   "p90": 64,
+   "p99": 150,
+   "max": 302
+  },
+  "bytes": {
+   "raw_tiles_in": 56340729,
+   "slim_tiles_out": 13313657
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 49942,
+   "has_parts": 49942,
+   "id": 49942,
+   "@geometry_source": 49942,
+   "sources": 49942,
+   "version": 49942,
+   "subtype": 53,
+   "class": 45,
+   "@name": 28,
+   "names": 28,
+   "num_floors": 13,
+   "@height_source": 9,
+   "height": 9
+  },
+  "keys_sampled_features": 49942,
+  "value_types": {
+   "is_underground": {
+    "bool": 49942
+   },
+   "has_parts": {
+    "bool": 49942
+   },
+   "subtype": {
+    "str": 53
+   },
+   "class": {
+    "str": 45
+   },
+   "num_floors": {
+    "int": 13
+   },
+   "height": {
+    "float": 9
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "359c2da6-dceb-4615-97e0-6adb7ec1b0fd",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b2c2aeb8-f75f-47a1-81ee-1e70deb03d77",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "359c2da6-dceb-4615-97e0-6adb7ec1b0fd",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "023f9523-e4b2-490a-a777-6973f3a9880c",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "daaad8fb-e06e-4e0b-8a47-8abbce6519b4",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "c290019d-624a-4f52-898a-bde64c431fdd",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "2432f40a-b0f3-4f39-876f-510e485bbfbb",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b8ed4493-934e-4270-8521-d2ef94904fff",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:54:15 verify.go:169: Completed verify in 537.09µs.\n"
+ },
+ "check": {
+  "file": "basra.pmtiles",
+  "bytes": 13320284,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   46.4,
+   29.05,
+   48.6,
+   31.2
+  ],
+  "header_addressed_tiles": 3194,
+  "header_entries": 3194,
+  "header_contents": 3194,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 3194,
+  "addressed_read": 3194,
+  "tiles_checked": 457,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 144334,
+  "polygons_in_sample": 144334,
+  "with_h_in_sample": 329,
+  "h_max_in_sample": 250,
+  "problems": []
+ },
+ "bytes": 13320284,
+ "seconds": 11.9,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:54:15Z"
+}

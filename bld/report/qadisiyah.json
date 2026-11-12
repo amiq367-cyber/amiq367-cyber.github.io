@@ -1,0 +1,205 @@
+{
+ "id": "qadisiyah",
+ "name": "القادسية",
+ "bbox": [
+  44.3,
+  31.5,
+  45.6,
+  32.4
+ ],
+ "release": "2026-10-21.0",
+ "status": "ok",
+ "debug": false,
+ "raw_bytes": 34652963,
+ "slim": {
+  "id": "qadisiyah",
+  "release": "2026-10-21.0",
+  "bbox": [
+   44.3,
+   31.5,
+   45.6,
+   32.4
+  ],
+  "seconds": 5.7,
+  "tiles_in": 1439,
+  "tiles_out": 1439,
+  "zooms_seen": {
+   "14": 1439
+  },
+  "layers_seen": {
+   "building": 1439,
+   "building_part": 4
+  },
+  "features": {
+   "building_in": 654820,
+   "kept": 654820,
+   "underground_dropped": 0,
+   "not_polygon_dropped": 0,
+   "tiny_dropped": 0,
+   "with_height": 138,
+   "height_from_floors": 132,
+   "no_height": 654550
+  },
+  "height_percentiles_m": {
+   "p10": 2,
+   "p50": 3,
+   "p90": 15,
+   "p99": 56,
+   "max": 60
+  },
+  "bytes": {
+   "raw_tiles_in": 34648689,
+   "slim_tiles_out": 8588709
+  },
+  "keys_seen_first_tiles": {
+   "is_underground": 35953,
+   "has_parts": 35953,
+   "id": 35953,
+   "@geometry_source": 35953,
+   "sources": 35953,
+   "version": 35953,
+   "@name": 9,
+   "names": 9,
+   "subtype": 7,
+   "class": 7
+  },
+  "keys_sampled_features": 35953,
+  "value_types": {
+   "is_underground": {
+    "bool": 35953
+   },
+   "has_parts": {
+    "bool": 35953
+   },
+   "subtype": {
+    "str": 7
+   },
+   "class": {
+    "str": 7
+   }
+  },
+  "sample_props": [
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "8a5a2188-8107-430f-98a0-5b3afb8dfc93",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "2278810c-4147-48fe-94cf-f7ca07733926",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "c055e1a4-642d-459e-9d7e-6b8b59343b92",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "da768ae7-3519-4a93-8894-7172d13cc8cf",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "0fa59169-97a2-4eb6-93da-299f1389b4df",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "b9d37697-50d1-41eb-b56c-3d725e69f10a",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "fa7dbdbb-7ff7-4fda-9c2e-fc2fd8f97aa3",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   },
+   {
+    "is_underground": false,
+    "has_parts": false,
+    "id": "960cb099-9bca-4663-b6a3-aa9d77b8fff2",
+    "@geometry_source": "Microsoft ML Buildings",
+    "sources": "...",
+    "version": 4
+   }
+  ]
+ },
+ "verify": {
+  "exit": 0,
+  "log_tail": "2026/11/12 21:56:14 verify.go:169: Completed verify in 322.604µs.\n"
+ },
+ "check": {
+  "file": "qadisiyah.pmtiles",
+  "bytes": 8592269,
+  "tile_type": 1,
+  "tile_compression": 2,
+  "internal_compression": 2,
+  "zoom": [
+   14,
+   14
+  ],
+  "bounds": [
+   44.3,
+   31.5,
+   45.6,
+   32.4
+  ],
+  "header_addressed_tiles": 1439,
+  "header_entries": 1439,
+  "header_contents": 1439,
+  "clustered": 1,
+  "metadata_keys": [
+   "attribution",
+   "description",
+   "format",
+   "maxzoom",
+   "minzoom",
+   "name",
+   "type",
+   "vector_layers",
+   "version"
+  ],
+  "vector_layers": [
+   "buildings"
+  ],
+  "entries_read": 1439,
+  "addressed_read": 1439,
+  "tiles_checked": 480,
+  "layers": [
+   "buildings"
+  ],
+  "keys": [
+   "h"
+  ],
+  "features_in_sample": 227520,
+  "polygons_in_sample": 227520,
+  "with_h_in_sample": 152,
+  "h_max_in_sample": 60,
+  "problems": []
+ },
+ "bytes": 8592269,
+ "seconds": 8.0,
+ "source_url": "https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-10-21.0/buildings.pmtiles",
+ "built_at": "2026-11-12T21:56:15Z"
+}
