@@ -1,0 +1,21 @@
+{
+ "shards": {
+  "babil": {
+   "id": "babil",
+   "name": "بابل",
+   "bbox": [
+    44.0,
+    32.0,
+    45.1,
+    33.3
+   ],
+   "bytes": 20277197,
+   "release": "2026-10-21.0",
+   "built_at": "2026-11-12T21:53:40Z",
+   "buildings": 1609525,
+   "with_height": 5105
+  }
+ },
+ "source": "Overture Maps buildings 2026-10-21.0",
+ "attribution": "(c) OpenStreetMap contributors, (c) Overture Maps Foundation"
+}
