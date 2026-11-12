@@ -1,0 +1,1354 @@
+name: bld-packs
+# Daliny: يجهّز مباني Overture لكل محافظة ويحفظها بمجلد bld/
+# يشتغل لحاله عند إضافة هذا الملف، ويمكن تشغيله يدوياً من تبويب Actions (Run workflow).
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bld-packs.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'auto = تجربة صغيرة ثم بابل ثم باقي المحافظات | debug = تجربة صغيرة فقط | build = المحافظات المكتوبة بالحقل التالي فقط'
+        type: choice
+        options:
+          - auto
+          - debug
+          - build
+        default: auto
+      ids:
+        description: 'للوضع build: أسماء المحافظات (مثال: babil karbala) أو all'
+        required: false
+        default: 'babil'
+      release:
+        description: 'إصدار Overture (فارغ = الافتراضي)'
+        required: false
+        default: ''
+      min_area:
+        description: 'حذف المباني الأصغر من هذي المساحة (0 = لا يحذف شي)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: bld-packs
+  cancel-in-progress: false
+
+env:
+  PYTHONIOENCODING: utf-8
+  MODE: ${{ github.event.inputs.mode || 'auto' }}
+  BLD_RELEASE: ${{ github.event.inputs.release }}
+  BLD_MIN_AREA: ${{ github.event.inputs.min_area }}
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Write tools
+        run: |
+          mkdir -p tools
+          cat > tools/bld_slim.py <<'__DALINY_EOF__'
+          #!/usr/bin/env python3
+          # -*- coding: utf-8 -*-
+          """
+          Daliny - تخفيف مباني Overture
+          يقرأ ملف PMTiles (مستوى z14 فقط) مقصوص من ملف مباني Overture، ويكتب ملف MBTiles صغير:
+            - طبقة وحدة اسمها 'buildings' (المضلعات فقط، بدون building_part ولا المباني تحت الأرض)
+            - خاصية وحدة 'h' = الارتفاع بالأمتار (إذا موجود ارتفاع أو عدد طوابق)
+          الهندسة (geometry) تنسخ كما هي بدون تفكيك. بايثون قياسي فقط (بدون مكتبات خارجية).
+          """
+          import argparse
+          import collections
+          import gzip
+          import json
+          import mmap
+          import os
+          import sqlite3
+          import struct
+          import sys
+          import time
+
+          FLOOR_M = 3.2        # ارتفاع الطابق التقريبي عند وجود عدد طوابق بدون ارتفاع
+          MAX_H = 600          # سقف معقول للارتفاع
+          IN_LAYERS = ('building', 'buildings')
+
+
+          def is_building_layer(name):
+              """طبقة المباني الرئيسية (مو building_part)"""
+              if name in IN_LAYERS:
+                  return True
+              return bool(name) and 'building' in name and 'part' not in name
+
+
+          # ---------------------------------------------------------------- protobuf helpers
+          def rv(b, i):
+              """يقرأ varint من b ابتداءً من i -> (القيمة، الموضع التالي)"""
+              r = 0
+              s = 0
+              while True:
+                  c = b[i]
+                  i += 1
+                  r |= (c & 0x7F) << s
+                  if c < 0x80:
+                      return r, i
+                  s += 7
+
+
+          def wv(n):
+              out = bytearray()
+              while n > 0x7F:
+                  out.append((n & 0x7F) | 0x80)
+                  n >>= 7
+              out.append(n)
+              return bytes(out)
+
+
+          def fields(b, i, end):
+              """يمر على حقول رسالة protobuf: (رقم الحقل، نوع الربط، القيمة). للنوع 2/1/5 القيمة = (بداية، نهاية)"""
+              while i < end:
+                  k, i = rv(b, i)
+                  fn, wt = k >> 3, k & 7
+                  if wt == 0:
+                      v, i = rv(b, i)
+                      yield fn, 0, v
+                  elif wt == 2:
+                      ln, i = rv(b, i)
+                      yield fn, 2, (i, i + ln)
+                      i += ln
+                  elif wt == 5:
+                      yield fn, 5, (i, i + 4)
+                      i += 4
+                  elif wt == 1:
+                      yield fn, 1, (i, i + 8)
+                      i += 8
+                  else:
+                      raise ValueError('wire type %d' % wt)
+
+
+          def packed_varints(b, p, q):
+              out = []
+              while p < q:
+                  c = b[p]
+                  p += 1
+                  if c < 0x80:
+                      out.append(c)
+                      continue
+                  r = c & 0x7F
+                  s = 7
+                  while True:
+                      c = b[p]
+                      p += 1
+                      r |= (c & 0x7F) << s
+                      if c < 0x80:
+                          break
+                      s += 7
+                  out.append(r)
+              return out
+
+
+          def decode_value(b, s, e):
+              """رسالة Value من MVT -> قيمة بايثون"""
+              for fn, wt, v in fields(b, s, e):
+                  if fn == 1 and wt == 2:
+                      return bytes(b[v[0]:v[1]]).decode('utf8', 'replace')
+                  if fn == 2 and wt == 5:
+                      return struct.unpack_from('<f', b, v[0])[0]
+                  if fn == 3 and wt == 1:
+                      return struct.unpack_from('<d', b, v[0])[0]
+                  if fn == 4 and wt == 0:
+                      return v if v < (1 << 63) else v - (1 << 64)
+                  if fn == 5 and wt == 0:
+                      return v
+                  if fn == 6 and wt == 0:
+                      return (v >> 1) ^ -(v & 1)
+                  if fn == 7 and wt == 0:
+                      return bool(v)
+              return None
+
+
+          # ---------------------------------------------------------------- tile ids (Hilbert) as in PMTiles v3
+          def zxy_to_tileid(z, x, y):
+              acc = 0
+              for t in range(z):
+                  acc += (1 << t) * (1 << t)
+              n = 1 << z
+              d = 0
+              s = n // 2
+              xx, yy = x, y
+              while s > 0:
+                  rx = 1 if (xx & s) > 0 else 0
+                  ry = 1 if (yy & s) > 0 else 0
+                  d += s * s * ((3 * rx) ^ ry)
+                  if ry == 0:
+                      if rx == 1:
+                          xx = s - 1 - xx
+                          yy = s - 1 - yy
+                      xx, yy = yy, xx
+                  s //= 2
+              return acc + d
+
+
+          def tileid_to_zxy(i):
+              z = 0
+              acc = 0
+              while True:
+                  num = (1 << z) * (1 << z)
+                  if acc + num > i:
+                      break
+                  acc += num
+                  z += 1
+              n = 1 << z
+              t = i - acc
+              x = 0
+              y = 0
+              s = 1
+              while s < n:
+                  rx = 1 & (t // 2)
+                  ry = 1 & (t ^ rx)
+                  if ry == 0:
+                      if rx == 1:
+                          x = s - 1 - x
+                          y = s - 1 - y
+                      x, y = y, x
+                  x += s * rx
+                  y += s * ry
+                  t //= 4
+                  s *= 2
+              return z, x, y
+
+
+          # ---------------------------------------------------------------- PMTiles v3 reader (mmap)
+          class PMReader:
+              def __init__(self, path):
+                  self.f = open(path, 'rb')
+                  self.mm = mmap.mmap(self.f.fileno(), 0, access=mmap.ACCESS_READ)
+                  h = self.mm[:127]
+                  if h[:7] != b'PMTiles' or h[7] != 3:
+                      raise ValueError('ليس ملف PMTiles بالإصدار 3')
+                  (self.root_off, self.root_len, self.meta_off, self.meta_len, self.leaf_off, self.leaf_len,
+                   self.data_off, self.data_len, self.addressed, self.entries_n, self.contents) = struct.unpack('<11Q', h[8:96])
+                  (self.clustered, self.icomp, self.tcomp, self.ttype, self.minz, self.maxz) = struct.unpack('<6B', h[96:102])
+                  self.minlon, self.minlat, self.maxlon, self.maxlat = [v / 1e7 for v in struct.unpack('<4i', h[102:118])]
+                  self.center_zoom = h[118]
+
+              def close(self):
+                  try:
+                      self.mm.close()
+                      self.f.close()
+                  except Exception:
+                      pass
+
+              @staticmethod
+              def _decomp(b, comp):
+                  if comp == 2:
+                      return gzip.decompress(b)
+                  if comp in (0, 1):
+                      return bytes(b)
+                  raise ValueError('ضغط غير مدعوم: %d' % comp)
+
+              def metadata(self):
+                  return json.loads(self._decomp(self.mm[self.meta_off:self.meta_off + self.meta_len], self.icomp))
+
+              def _read_dir(self, off, ln):
+                  b = self._decomp(self.mm[off:off + ln], self.icomp)
+                  n, i = rv(b, 0)
+                  ids = []
+                  last = 0
+                  for _ in range(n):
+                      d, i = rv(b, i)
+                      last += d
+                      ids.append(last)
+                  runs = []
+                  for _ in range(n):
+                      v, i = rv(b, i)
+                      runs.append(v)
+                  lens = []
+                  for _ in range(n):
+                      v, i = rv(b, i)
+                      lens.append(v)
+                  offs = []
+                  for j in range(n):
+                      v, i = rv(b, i)
+                      if v == 0 and j > 0:
+                          offs.append(offs[j - 1] + lens[j - 1])
+                      else:
+                          offs.append(v - 1)
+                  return list(zip(ids, runs, lens, offs))
+
+              def iter_entries(self):
+                  """كل مدخلات الأجزاء (tile_id, run_length, length, offset) بالترتيب"""
+                  def walk(off, ln, depth):
+                      if depth > 4:
+                          raise ValueError('أدلة متداخلة أكثر من اللازم')
+                      for tid, run, length, offset in self._read_dir(off, ln):
+                          if run == 0:
+                              for e in walk(self.leaf_off + offset, length, depth + 1):
+                                  yield e
+                          else:
+                              yield tid, run, length, offset
+                  return walk(self.root_off, self.root_len, 0)
+
+              def tile_bytes(self, offset, length):
+                  return self.mm[self.data_off + offset:self.data_off + offset + length]
+
+              def tile_plain(self, offset, length):
+                  return self._decomp(self.tile_bytes(offset, length), self.tcomp)
+
+
+          # ---------------------------------------------------------------- slimming one tile
+          class Stats:
+              def __init__(self):
+                  self.layers = collections.Counter()
+                  self.keys = collections.Counter()
+                  self.keys_sampled_features = 0
+                  self.tiles_in = 0
+                  self.tiles_out = 0
+                  self.f_in = 0
+                  self.f_kept = 0
+                  self.f_underground = 0
+                  self.f_not_polygon = 0
+                  self.f_tiny = 0
+                  self.f_height = 0
+                  self.f_floors = 0
+                  self.f_none = 0
+                  self.hist = collections.Counter()
+                  self.bytes_in = 0
+                  self.bytes_out = 0
+                  self.samples = []
+                  self.types = collections.defaultdict(collections.Counter)  # اسم الحقل -> أنواع القيم المشاهدة
+                  self.z_seen = collections.Counter()
+
+
+          def ring_area(b, s, e):
+              """مساحة أول حلقة بوحدات الجزء (للتصفية الاختيارية للمباني الصغيرة جداً)"""
+              p = s
+              x = y = 0
+              pts = []
+              while p < e:
+                  c, p = rv(b, p)
+                  cid, cnt = c & 7, c >> 3
+                  if cid == 7:
+                      break
+                  for _ in range(cnt):
+                      dx, p = rv(b, p)
+                      dy, p = rv(b, p)
+                      x += (dx >> 1) ^ -(dx & 1)
+                      y += (dy >> 1) ^ -(dy & 1)
+                      pts.append((x, y))
+              a = 0.0
+              n = len(pts)
+              for i in range(n):
+                  x1, y1 = pts[i]
+                  x2, y2 = pts[(i + 1) % n]
+                  a += x1 * y2 - x2 * y1
+              return abs(a) / 2.0
+
+
+          def is_num(v):
+              return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+          def slim_tile(data, st, min_area=0.0, sample_keys=False):
+              """data = بايتات MVT غير مضغوطة. يرجع بايتات MVT جديدة (غير مضغوطة) أو None إذا ما بقي شي"""
+              kept = []          # (h أو 0، (بداية الهندسة، نهايتها))
+              extent = 4096
+              for fn, wt, rng in fields(data, 0, len(data)):
+                  if fn != 3 or wt != 2:
+                      continue
+                  ls, le = rng
+                  name = None
+                  for f2, w2, v2 in fields(data, ls, le):
+                      if f2 == 1 and w2 == 2:
+                          name = bytes(data[v2[0]:v2[1]]).decode('utf8', 'replace')
+                          break
+                  st.layers[name] += 1
+                  if not is_building_layer(name):
+                      continue
+                  keys = []
+                  vals = []
+                  feats = []
+                  for f2, w2, v2 in fields(data, ls, le):
+                      if f2 == 3 and w2 == 2:
+                          keys.append(bytes(data[v2[0]:v2[1]]).decode('utf8', 'replace'))
+                      elif f2 == 4 and w2 == 2:
+                          vals.append(v2)
+                      elif f2 == 2 and w2 == 2:
+                          feats.append(v2)
+                      elif f2 == 5 and w2 == 0:
+                          extent = v2
+                  kh = keys.index('height') if 'height' in keys else -1
+                  kn = keys.index('num_floors') if 'num_floors' in keys else -1
+                  ku = keys.index('is_underground') if 'is_underground' in keys else -1
+                  vcache = {}
+
+                  def val(vi):
+                      if vi in vcache:
+                          return vcache[vi]
+                      s, e = vals[vi]
+                      r = decode_value(data, s, e)
+                      vcache[vi] = r
+                      return r
+
+                  for fs, fe in feats:
+                      st.f_in += 1
+                      typ = 0
+                      tags = []
+                      geom = None
+                      for f3, w3, v3 in fields(data, fs, fe):
+                          if f3 == 2 and w3 == 2:
+                              tags = packed_varints(data, v3[0], v3[1])
+                          elif f3 == 3 and w3 == 0:
+                              typ = v3
+                          elif f3 == 4 and w3 == 2:
+                              geom = v3
+                      if typ != 3 or geom is None:
+                          st.f_not_polygon += 1
+                          continue
+                      hv = nf = None
+                      und = False
+                      nt = len(tags) - 1
+                      for j in range(0, nt, 2):
+                          k = tags[j]
+                          if k == kh:
+                              hv = val(tags[j + 1])
+                          elif k == kn:
+                              nf = val(tags[j + 1])
+                          elif k == ku:
+                              und = val(tags[j + 1])
+                      if sample_keys:
+                          st.keys_sampled_features += 1
+                          for j in range(0, nt, 2):
+                              kk = keys[tags[j]]
+                              st.keys[kk] += 1
+                              if kk in ('height', 'num_floors', 'is_underground', 'class', 'subtype', 'min_height', 'has_parts'):
+                                  st.types[kk][type(val(tags[j + 1])).__name__] += 1
+                          if len(st.samples) < 8:
+                              st.samples.append({keys[tags[j]]: (val(tags[j + 1]) if keys[tags[j]] not in ('sources', 'names') else '...') for j in range(0, nt, 2)})
+                      if und is True:
+                          st.f_underground += 1
+                          continue
+                      if min_area > 0 and ring_area(data, geom[0], geom[1]) < min_area:
+                          st.f_tiny += 1
+                          continue
+                      h = 0
+                      if is_num(hv) and hv > 0:
+                          h = max(1, min(MAX_H, int(hv + 0.5)))
+                          st.f_height += 1
+                      elif is_num(nf) and nf > 0:
+                          h = max(1, min(MAX_H, int(nf * FLOOR_M + 0.5)))
+                          st.f_floors += 1
+                      else:
+                          st.f_none += 1
+                      if h:
+                          st.hist[h] += 1
+                      st.f_kept += 1
+                      kept.append((h, geom))
+              if not kept:
+                  return None
+              hs = sorted(set(h for h, _ in kept if h))
+              vidx = {h: i for i, h in enumerate(hs)}
+              layer = bytearray()
+              layer += b'\x78\x02'                                   # version = 2
+              layer += b'\x0a' + wv(9) + b'buildings'                 # name
+              for h, (gs, ge) in kept:
+                  f = bytearray()
+                  if h:
+                      tg = b'\x00' + wv(vidx[h])                      # (مفتاح 0 = 'h'، فهرس القيمة)
+                      f += b'\x12' + wv(len(tg)) + tg
+                  f += b'\x18\x03'                                    # type = POLYGON
+                  f += b'\x22' + wv(ge - gs) + data[gs:ge]            # الهندسة كما هي
+                  layer += b'\x12' + wv(len(f)) + f
+              if hs:
+                  layer += b'\x1a\x01h'                               # keys: ['h']
+                  for h in hs:
+                      v = b'\x28' + wv(h)                             # Value.uint_value
+                      layer += b'\x22' + wv(len(v)) + v
+              layer += b'\x28' + wv(extent)
+              return b'\x1a' + wv(len(layer)) + bytes(layer)
+
+
+          # ---------------------------------------------------------------- MBTiles output
+          def open_mbtiles(path, meta):
+              if os.path.exists(path):
+                  os.remove(path)
+              con = sqlite3.connect(path)
+              con.execute('PRAGMA journal_mode=OFF')
+              con.execute('PRAGMA synchronous=OFF')
+              con.execute('CREATE TABLE metadata (name text, value text)')
+              con.execute('CREATE TABLE tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob)')
+              con.execute('CREATE UNIQUE INDEX tile_index on tiles (zoom_level, tile_column, tile_row)')
+              for k, v in meta.items():
+                  con.execute('INSERT INTO metadata VALUES (?,?)', (k, str(v)))
+              return con
+
+
+          def run_slim(src, out_mbtiles, shard_id, bbox, release, min_area=0.0, limit=0, log=print):
+              t0 = time.time()
+              pm = PMReader(src)
+              st = Stats()
+              meta = {
+                  'name': 'daliny-bld-' + shard_id,
+                  'format': 'pbf',
+                  'type': 'overlay',
+                  'version': '1',
+                  'minzoom': 14,
+                  'maxzoom': 14,
+                  'description': 'Overture Maps buildings (release %s), slimmed for Daliny' % release,
+                  'attribution': '&copy; OpenStreetMap contributors, &copy; Overture Maps Foundation',
+                  'json': json.dumps({'vector_layers': [{'id': 'buildings', 'fields': {'h': 'Number'}, 'minzoom': 14, 'maxzoom': 14}]}),
+              }
+              if bbox:
+                  meta['bounds'] = ','.join(repr(float(v)) for v in bbox)
+                  meta['center'] = '%r,%r,14' % ((bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0)
+              else:
+                  meta['bounds'] = '%r,%r,%r,%r' % (pm.minlon, pm.minlat, pm.maxlon, pm.maxlat)
+              con = open_mbtiles(out_mbtiles, meta)
+              n = 0
+              pending = 0
+              for tid, run, length, offset in pm.iter_entries():
+                  raw = pm.tile_bytes(offset, length)
+                  st.bytes_in += length
+                  data = gzip.decompress(raw) if (pm.tcomp == 2) else bytes(raw)
+                  newt = slim_tile(data, st, min_area, sample_keys=(st.tiles_in < 300))
+                  for t in range(tid, tid + run):
+                      z, x, y = tileid_to_zxy(t)
+                      st.z_seen[z] += 1
+                      st.tiles_in += 1
+                      if z != 14 or newt is None:
+                          continue
+                      gz = gzip.compress(newt, 9, mtime=0)
+                      con.execute('INSERT OR REPLACE INTO tiles VALUES (?,?,?,?)', (z, x, (1 << z) - 1 - y, sqlite3.Binary(gz)))
+                      st.tiles_out += 1
+                      st.bytes_out += len(gz)
+                      pending += 1
+                  n += 1
+                  if pending >= 2000:
+                      con.commit()
+                      pending = 0
+                  if n % 5000 == 0:
+                      log('  ... %d مدخل، %d جزء، %d مبنى (%.0f ث)' % (n, st.tiles_out, st.f_kept, time.time() - t0))
+                  if limit and n >= limit:
+                      break
+              con.commit()
+              con.close()
+              pm.close()
+              sec = time.time() - t0
+              hist = sorted(st.hist.items())
+              total_h = sum(c for _, c in hist)
+              pct = {}
+              if total_h:
+                  acc = 0
+                  want = {'p10': 0.10, 'p50': 0.50, 'p90': 0.90, 'p99': 0.99}
+                  for hh, c in hist:
+                      acc += c
+                      for k, q in list(want.items()):
+                          if acc >= q * total_h:
+                              pct[k] = hh
+                              del want[k]
+                  pct['max'] = hist[-1][0]
+              rep = {
+                  'id': shard_id, 'release': release, 'bbox': bbox, 'seconds': round(sec, 1),
+                  'tiles_in': st.tiles_in, 'tiles_out': st.tiles_out, 'zooms_seen': dict(st.z_seen),
+                  'layers_seen': dict(st.layers),
+                  'features': {
+                      'building_in': st.f_in, 'kept': st.f_kept, 'underground_dropped': st.f_underground,
+                      'not_polygon_dropped': st.f_not_polygon, 'tiny_dropped': st.f_tiny,
+                      'with_height': st.f_height, 'height_from_floors': st.f_floors, 'no_height': st.f_none,
+                  },
+                  'height_percentiles_m': pct,
+                  'bytes': {'raw_tiles_in': st.bytes_in, 'slim_tiles_out': st.bytes_out},
+                  'keys_seen_first_tiles': dict(st.keys.most_common(40)),
+                  'keys_sampled_features': st.keys_sampled_features,
+                  'value_types': {k: dict(v) for k, v in st.types.items()},
+                  'sample_props': st.samples,
+              }
+              return rep
+
+
+          def main(argv=None):
+              ap = argparse.ArgumentParser(description=__doc__)
+              ap.add_argument('--src', required=True, help='ملف PMTiles الخام (z14)')
+              ap.add_argument('--mbtiles', required=True, help='ملف MBTiles الناتج')
+              ap.add_argument('--id', required=True)
+              ap.add_argument('--bbox', default='', help='minLon,minLat,maxLon,maxLat')
+              ap.add_argument('--release', default='unknown')
+              ap.add_argument('--min-area', type=float, default=0.0, help='يحذف المباني الأصغر من هذي المساحة (وحدات الجزء^2). 0 = لا يحذف')
+              ap.add_argument('--limit', type=int, default=0, help='للتجربة: عدد المدخلات')
+              ap.add_argument('--report', default='')
+              a = ap.parse_args(argv)
+              bbox = [float(v) for v in a.bbox.split(',')] if a.bbox else None
+              rep = run_slim(a.src, a.mbtiles, a.id, bbox, a.release, a.min_area, a.limit)
+              if a.report:
+                  with open(a.report, 'w', encoding='utf8') as f:
+                      json.dump(rep, f, ensure_ascii=False, indent=1)
+              print(json.dumps({k: rep[k] for k in ('id', 'tiles_in', 'tiles_out', 'features', 'bytes', 'seconds')}, ensure_ascii=False))
+              return 0 if rep['tiles_out'] > 0 else 2
+
+
+          if __name__ == '__main__':
+              sys.exit(main())
+          __DALINY_EOF__
+          cat > tools/bld_check.py <<'__DALINY_EOF__'
+          #!/usr/bin/env python3
+          # -*- coding: utf-8 -*-
+          """
+          Daliny - فحص ملف مباني جاهز (PMTiles) بقارئ مستقل عن أداة Go:
+          يتأكد من الترويسة (MVT + gzip + z14) ويفكّ عينة من الأجزاء ويعدّ المباني والارتفاعات.
+          """
+          import gzip
+          import json
+          import os
+          import sys
+
+          from bld_slim import PMReader, fields, packed_varints, decode_value, tileid_to_zxy
+
+
+          def layer_summary(data):
+              """-> {اسم الطبقة: {'features': n, 'with_h': m, 'keys': [...], 'extent': e}}"""
+              out = {}
+              for fn, wt, rng in fields(data, 0, len(data)):
+                  if fn != 3 or wt != 2:
+                      continue
+                  ls, le = rng
+                  name = None
+                  keys = []
+                  vals = []
+                  feats = []
+                  extent = None
+                  for f2, w2, v2 in fields(data, ls, le):
+                      if f2 == 1 and w2 == 2:
+                          name = bytes(data[v2[0]:v2[1]]).decode('utf8', 'replace')
+                      elif f2 == 3 and w2 == 2:
+                          keys.append(bytes(data[v2[0]:v2[1]]).decode('utf8', 'replace'))
+                      elif f2 == 4 and w2 == 2:
+                          vals.append(v2)
+                      elif f2 == 2 and w2 == 2:
+                          feats.append(v2)
+                      elif f2 == 5 and w2 == 0:
+                          extent = v2
+                  kh = keys.index('h') if 'h' in keys else -1
+                  with_h = 0
+                  hmax = 0
+                  polys = 0
+                  for fs, fe in feats:
+                      typ = 0
+                      tags = []
+                      for f3, w3, v3 in fields(data, fs, fe):
+                          if f3 == 2 and w3 == 2:
+                              tags = packed_varints(data, v3[0], v3[1])
+                          elif f3 == 3 and w3 == 0:
+                              typ = v3
+                      if typ == 3:
+                          polys += 1
+                      for j in range(0, len(tags) - 1, 2):
+                          if tags[j] == kh:
+                              v = decode_value(data, vals[tags[j + 1]][0], vals[tags[j + 1]][1])
+                              if isinstance(v, (int, float)):
+                                  with_h += 1
+                                  hmax = max(hmax, v)
+                  out[name] = {'features': len(feats), 'polygons': polys, 'with_h': with_h, 'h_max': hmax, 'keys': keys, 'extent': extent}
+              return out
+
+
+          def check(path, expect_layer='buildings', sample=400):
+              problems = []
+              pm = PMReader(path)
+              info = {
+                  'file': os.path.basename(path), 'bytes': os.path.getsize(path),
+                  'tile_type': pm.ttype, 'tile_compression': pm.tcomp, 'internal_compression': pm.icomp,
+                  'zoom': [pm.minz, pm.maxz], 'bounds': [pm.minlon, pm.minlat, pm.maxlon, pm.maxlat],
+                  'header_addressed_tiles': pm.addressed, 'header_entries': pm.entries_n, 'header_contents': pm.contents,
+                  'clustered': pm.clustered,
+              }
+              if pm.ttype != 1:
+                  problems.append('نوع الأجزاء ليس MVT')
+              if pm.tcomp != 2:
+                  problems.append('ضغط الأجزاء ليس gzip')
+              if pm.minz != 14 or pm.maxz != 14:
+                  problems.append('مستوى التقريب ليس 14 فقط: %d-%d' % (pm.minz, pm.maxz))
+              if not (pm.minlon < pm.maxlon and pm.minlat < pm.maxlat):
+                  problems.append('حدود الملف غير صحيحة')
+              try:
+                  meta = pm.metadata()
+                  info['metadata_keys'] = sorted(meta.keys())
+                  vl = meta.get('vector_layers') or []
+                  info['vector_layers'] = [v.get('id') for v in vl]
+              except Exception as e:
+                  problems.append('فشل قراءة الميتاداتا: %s' % e)
+              ents = list(pm.iter_entries())
+              addressed = sum(e[1] for e in ents)
+              info['entries_read'] = len(ents)
+              info['addressed_read'] = addressed
+              if addressed != pm.addressed:
+                  problems.append('عدد الأجزاء بالأدلة %d لا يطابق الترويسة %d' % (addressed, pm.addressed))
+              if not ents:
+                  problems.append('الملف فارغ')
+              step = max(1, len(ents) // sample)
+              feats = polys = with_h = 0
+              hmax = 0
+              tiles_checked = 0
+              layers = set()
+              keys = set()
+              bad_extent = 0
+              for idx in range(0, len(ents), step):
+                  tid, run, length, offset = ents[idx]
+                  z, x, y = tileid_to_zxy(tid)
+                  if z != 14:
+                      problems.append('جزء بمستوى %d' % z)
+                      break
+                  try:
+                      data = pm.tile_plain(offset, length)
+                      ls = layer_summary(data)
+                  except Exception as e:
+                      problems.append('فشل فك الجزء %d/%d/%d: %s' % (z, x, y, e))
+                      break
+                  tiles_checked += 1
+                  for name, s in ls.items():
+                      layers.add(name)
+                      keys.update(s['keys'])
+                      if name == expect_layer:
+                          feats += s['features']
+                          polys += s['polygons']
+                          with_h += s['with_h']
+                          hmax = max(hmax, s['h_max'])
+                          if s['extent'] not in (4096, None):
+                              bad_extent += 1
+              info.update({'tiles_checked': tiles_checked, 'layers': sorted(layers), 'keys': sorted(keys),
+                           'features_in_sample': feats, 'polygons_in_sample': polys, 'with_h_in_sample': with_h, 'h_max_in_sample': hmax})
+              if expect_layer not in layers:
+                  problems.append('الطبقة %s غير موجودة' % expect_layer)
+              if feats == 0:
+                  problems.append('ما لقيت أي مبنى بالعينة')
+              if polys != feats:
+                  problems.append('فيه عناصر مو مضلعات')
+              if bad_extent:
+                  problems.append('extent غير 4096 بـ %d جزء' % bad_extent)
+              pm.close()
+              info['problems'] = problems
+              return info
+
+
+          if __name__ == '__main__':
+              res = check(sys.argv[1])
+              print(json.dumps(res, ensure_ascii=False, indent=1))
+              sys.exit(1 if res['problems'] else 0)
+          __DALINY_EOF__
+          cat > tools/bld_run.py <<'__DALINY_EOF__'
+          #!/usr/bin/env python3
+          # -*- coding: utf-8 -*-
+          """
+          Daliny - تشغيل تجهيز مباني Overture لكل محافظة (يُشغَّل على GitHub Actions من جذر المستودع).
+
+          الإعدادات (متغيرات بيئة، أو ملف bld-request.txt بسطور key=value):
+              BLD_MODE      debug = تجربة صغيرة حول الحلة (تحفظ الملف الخام للفحص) | build = تجهيز المحافظات
+              BLD_IDS       babil karbala ...  أو all
+              BLD_RELEASE   إصدار Overture (فارغ = الافتراضي)
+              BLD_MIN_AREA  حذف المباني الأصغر من هذي المساحة (0 = لا يحذف)
+
+          لكل محافظة: pmtiles extract (z14 فقط) -> bld_slim -> pmtiles convert -> pmtiles verify -> bld_check
+          ثم ينسخ bld/<id>.pmtiles ويكتب bld/report/<id>.json و bld/index.json
+          """
+          import json
+          import os
+          import re
+          import shutil
+          import subprocess
+          import sys
+          import time
+          import urllib.request
+
+          HERE = os.path.dirname(os.path.abspath(__file__))
+          sys.path.insert(0, HERE)
+          import bld_slim  # noqa: E402
+          import bld_check  # noqa: E402
+
+          REQ = os.environ.get('BLD_REQUEST', 'bld-request.txt')
+          OUT = os.environ.get('BLD_OUT', 'bld')
+          WORK = os.environ.get('BLD_WORK', '/tmp/bldwork')
+          BASE = 'https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com'
+          DEFAULT_RELEASE = '2026-10-21.0'
+          MAX_FILE = 95 * 1000 * 1000     # حد GitHub للملف 100MB
+          MAX_DEBUG_RAW = 40 * 1000 * 1000
+          PMTILES = os.environ.get('PMTILES_BIN', 'pmtiles')
+          DEBUG_SHARD = {'id': 'hilla-debug', 'name': 'تجربة الحلة', 'bbox': [44.38, 32.43, 44.48, 32.53]}
+
+
+          def log(*a):
+              print(*a, flush=True)
+
+
+          def tail(s, n=2500):
+              s = s or ''
+              return s[-n:]
+
+
+          def run(cmd, timeout):
+              t0 = time.time()
+              log('$', ' '.join(cmd))
+              p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+              log('  -> exit %d (%.0f s)' % (p.returncode, time.time() - t0))
+              if p.returncode != 0:
+                  log(tail(p.stdout), tail(p.stderr))
+              return p
+
+
+          def parse_request(path):
+              req = {'mode': 'build', 'release': '', 'ids': [], 'min_area': 0.0, 'skip': []}
+              if os.path.exists(path):
+                  for line in open(path, encoding='utf8'):
+                      line = line.split('#', 1)[0].strip()
+                      if '=' not in line:
+                          continue
+                      k, v = [x.strip() for x in line.split('=', 1)]
+                      if k == 'mode':
+                          req['mode'] = v
+                      elif k == 'release':
+                          req['release'] = v
+                      elif k == 'ids':
+                          req['ids'] = [x for x in re.split(r'[\s,]+', v) if x]
+                      elif k == 'min_area':
+                          try:
+                              req['min_area'] = float(v)
+                          except ValueError:
+                              pass
+              env = os.environ
+              if env.get('BLD_MODE'):
+                  req['mode'] = env['BLD_MODE'].strip()
+              if env.get('BLD_RELEASE') is not None and env.get('BLD_RELEASE', '').strip():
+                  req['release'] = env['BLD_RELEASE'].strip()
+              if env.get('BLD_IDS', '').strip():
+                  req['ids'] = [x for x in re.split(r'[\s,]+', env['BLD_IDS'].strip()) if x]
+              if env.get('BLD_SKIP', '').strip():
+                  req['skip'] = [x for x in re.split(r'[\s,]+', env['BLD_SKIP'].strip()) if x]
+              if env.get('BLD_MIN_AREA', '').strip():
+                  try:
+                      req['min_area'] = float(env['BLD_MIN_AREA'].strip())
+                  except ValueError:
+                      pass
+              return req
+
+
+          def head_ok(url):
+              try:
+                  r = urllib.request.Request(url, method='HEAD')
+                  with urllib.request.urlopen(r, timeout=60) as resp:
+                      return resp.status == 200, dict(resp.headers)
+              except Exception as e:
+                  return False, {'error': str(e)}
+
+
+          LIST_NOTE = {}
+
+
+          def latest_release():
+              """يبحث بقائمة الدلو العامة عن أحدث إصدار tiles/<date>/ (إذا الإصدار المثبّت ما اشتغل)"""
+              try:
+                  u = BASE + '/?list-type=2&prefix=tiles/&delimiter=/'
+                  with urllib.request.urlopen(u, timeout=60) as resp:
+                      xml = resp.read().decode('utf8', 'replace')
+                  LIST_NOTE['snippet'] = xml[:300]
+                  rels = sorted(set(re.findall(r'<Prefix>tiles/([0-9][^/<]*)/</Prefix>', xml)))
+                  return rels
+              except Exception as e:
+                  LIST_NOTE['error'] = str(e)[:300]
+                  log('تعذّر سرد الإصدارات:', e)
+                  return []
+
+
+          def resolve_source(req_release, notes):
+              forced = os.environ.get('BLD_SOURCE_URL')
+              if forced:
+                  notes.append('مصدر مفروض: ' + forced)
+                  return forced, req_release or 'forced'
+              tried = []
+              rel = req_release or DEFAULT_RELEASE
+              url = '%s/tiles/%s/buildings.pmtiles' % (BASE, rel)
+              ok, hdr = head_ok(url)
+              tried.append({'url': url, 'ok': ok, 'headers': {k: hdr[k] for k in hdr if k.lower() in ('content-length', 'accept-ranges', 'error', 'last-modified')}})
+              if ok:
+                  notes.append({'tried': tried})
+                  return url, rel
+              rels = latest_release()
+              notes.append({'tried': tried, 'releases_listed': rels[-6:], 'list_note': LIST_NOTE})
+              for rel in reversed(rels):
+                  url = '%s/tiles/%s/buildings.pmtiles' % (BASE, rel)
+                  ok, hdr = head_ok(url)
+                  tried.append({'url': url, 'ok': ok})
+                  if ok:
+                      return url, rel
+              return None, None
+
+
+          def build_shard(sh, url, release, min_area, debug=False):
+              sid = sh['id']
+              rep = {'id': sid, 'name': sh.get('name'), 'bbox': sh['bbox'], 'release': release, 'status': 'start', 'debug': debug}
+              t0 = time.time()
+              os.makedirs(WORK, exist_ok=True)
+              raw = os.path.join(WORK, sid + '.raw.pmtiles')
+              mb = os.path.join(WORK, sid + '.mbtiles')
+              fin = os.path.join(WORK, sid + '.pmtiles')
+              for f in (raw, mb, fin):
+                  if os.path.exists(f):
+                      os.remove(f)
+              bbox = ','.join(repr(float(v)) for v in sh['bbox'])
+              dest_dir = os.path.join(OUT, 'debug') if debug else OUT
+              try:
+                  if debug:
+                      p = run([PMTILES, 'show', url], 10 * 60)
+                      rep['source_show'] = tail(p.stdout + p.stderr, 7000)
+                  p = run([PMTILES, 'extract', url, raw, '--bbox=' + bbox, '--minzoom=14', '--maxzoom=14', '--download-threads=8'], 90 * 60)
+                  if p.returncode != 0 or not os.path.exists(raw):
+                      rep.update(status='extract_failed', log_tail=tail(p.stdout + p.stderr))
+                      return rep
+                  rep['raw_bytes'] = os.path.getsize(raw)
+                  if debug and rep['raw_bytes'] <= MAX_DEBUG_RAW:
+                      os.makedirs(dest_dir, exist_ok=True)
+                      shutil.copyfile(raw, os.path.join(dest_dir, sid + '.raw.pmtiles'))
+                      rep['raw_saved'] = True
+                  rep['slim'] = bld_slim.run_slim(raw, mb, sid, sh['bbox'], release, min_area, log=log)
+                  os.remove(raw)
+                  if rep['slim']['tiles_out'] == 0:
+                      rep.update(status='no_tiles')
+                      return rep
+                  p = run([PMTILES, 'convert', mb, fin], 60 * 60)
+                  if p.returncode != 0 or not os.path.exists(fin):
+                      rep.update(status='convert_failed', log_tail=tail(p.stdout + p.stderr))
+                      return rep
+                  os.remove(mb)
+                  p = run([PMTILES, 'verify', fin], 20 * 60)
+                  rep['verify'] = {'exit': p.returncode, 'log_tail': tail(p.stdout + p.stderr, 800)}
+                  if p.returncode != 0:
+                      rep.update(status='verify_failed')
+                      return rep
+                  chk = bld_check.check(fin)
+                  rep['check'] = chk
+                  if chk['problems']:
+                      rep.update(status='check_failed')
+                      return rep
+                  size = os.path.getsize(fin)
+                  rep['bytes'] = size
+                  if size > MAX_FILE:
+                      rep.update(status='too_big')
+                      return rep
+                  os.makedirs(dest_dir, exist_ok=True)
+                  shutil.copyfile(fin, os.path.join(dest_dir, sid + '.pmtiles'))
+                  rep['status'] = 'ok'
+                  return rep
+              except subprocess.TimeoutExpired as e:
+                  rep.update(status='timeout', log_tail=str(e)[:500])
+                  return rep
+              except Exception:  # noqa: BLE001
+                  import traceback
+                  rep.update(status='error', log_tail=traceback.format_exc()[-2500:])
+                  return rep
+              finally:
+                  rep['seconds'] = round(time.time() - t0, 1)
+                  for f in (raw, mb, fin):
+                      try:
+                          if os.path.exists(f):
+                              os.remove(f)
+                      except OSError:
+                          pass
+
+
+          def write_readme():
+              p = os.path.join(OUT, 'README.md')
+              if os.path.exists(p):
+                  return
+              os.makedirs(OUT, exist_ok=True)
+              with open(p, 'w', encoding='utf8') as f:
+                  f.write('# Daliny - building footprints (generated)\n\n'
+                          'Slimmed vector tiles (PMTiles, zoom 14, layer `buildings`, attribute `h` = height in metres when known)\n'
+                          'generated from the Overture Maps Foundation buildings theme.\n\n'
+                          'Data: (c) OpenStreetMap contributors, (c) Overture Maps Foundation.\n'
+                          'The buildings theme includes OpenStreetMap data and is made available under the Open Database License (ODbL 1.0);\n'
+                          'the files in this folder are a derived database and are provided under the same licence.\n'
+                          'See https://docs.overturemaps.org/attribution\n')
+
+
+          def write_summary(mode, url, release, rows):
+              """جدول ملخّص يظهر بصفحة التشغيل في GitHub"""
+              p = os.environ.get('GITHUB_STEP_SUMMARY')
+              if not p:
+                  return
+              try:
+                  with open(p, 'a', encoding='utf8') as f:
+                      f.write('### Daliny buildings - %s - Overture %s\n\n' % (mode, release))
+                      f.write('| shard | status | MB | buildings | with height | seconds |\n|---|---|---|---|---|---|\n')
+                      for sid, st, size, n, wh, sec in rows:
+                          f.write('| %s | %s | %s | %s | %s | %s |\n' % (sid, st, ('%.1f' % (size / 1e6)) if size else '-', n if n is not None else '-', wh if n is not None else '-', sec))
+                      f.write('\n')
+              except OSError:
+                  pass
+
+
+          def main():
+              req = parse_request(REQ)
+              shards = json.load(open(os.path.join(HERE, 'shards.json'), encoding='utf8'))['shards']
+              byid = {s['id']: s for s in shards}
+              debug = req['mode'] == 'debug'
+              os.makedirs(os.path.join(OUT, 'report'), exist_ok=True)
+              write_readme()
+              ids = req['ids']
+              if debug:
+                  ids = [DEBUG_SHARD['id']]
+                  byid[DEBUG_SHARD['id']] = DEBUG_SHARD
+              elif ids == ['all']:
+                  ids = [s['id'] for s in shards]
+              elif not ids:
+                  ids = ['babil']
+              if req['skip']:
+                  ids = [i for i in ids if i not in req['skip']]
+              unknown = [i for i in ids if i not in byid]
+              log('الوضع:', req['mode'], '| المحافظات:', ids, '| الإصدار المطلوب:', req['release'] or '(افتراضي)', '| min_area:', req['min_area'])
+              notes = []
+              url, release = resolve_source(req['release'], notes)
+              log('المصدر:', url, release)
+              if not url:
+                  with open(os.path.join(OUT, 'report', '_error.json'), 'w', encoding='utf8') as f:
+                      json.dump({'error': 'no source', 'notes': notes, 'unknown_ids': unknown}, f, ensure_ascii=False, indent=1)
+                  return 1
+              index_path = os.path.join(OUT, 'index.json')
+              index = {'shards': {}}
+              if os.path.exists(index_path):
+                  try:
+                      index = json.load(open(index_path, encoding='utf8'))
+                  except Exception:
+                      pass
+              failed = []
+              summary = []
+              for sid in ids:
+                  if sid not in byid:
+                      continue
+                  log('=' * 60, '\nمحافظة:', sid)
+                  rep = build_shard(byid[sid], url, release, req['min_area'], debug=debug)
+                  rep['source_url'] = url
+                  rep['built_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+                  with open(os.path.join(OUT, 'report', sid + '.json'), 'w', encoding='utf8') as f:
+                      json.dump(rep, f, ensure_ascii=False, indent=1)
+                  log('النتيجة:', sid, rep['status'], rep.get('bytes'))
+                  sl = rep.get('slim') or {}
+                  summary.append((sid, rep['status'], rep.get('bytes'), (sl.get('features') or {}).get('kept'), ((sl.get('features') or {}).get('with_height') or 0) + ((sl.get('features') or {}).get('height_from_floors') or 0), rep.get('seconds')))
+                  if rep['status'] == 'ok' and not debug:
+                      sl = rep['slim']
+                      index['shards'][sid] = {
+                          'id': sid, 'name': byid[sid].get('name'), 'bbox': byid[sid]['bbox'], 'bytes': rep['bytes'],
+                          'release': release, 'built_at': rep['built_at'],
+                          'buildings': sl['features']['kept'], 'with_height': sl['features']['with_height'] + sl['features']['height_from_floors'],
+                      }
+                  elif rep['status'] != 'ok':
+                      failed.append(sid)
+              if not debug:
+                  index['source'] = 'Overture Maps buildings ' + str(release)
+                  index['attribution'] = '(c) OpenStreetMap contributors, (c) Overture Maps Foundation'
+                  with open(index_path, 'w', encoding='utf8') as f:
+                      json.dump(index, f, ensure_ascii=False, indent=1)
+              write_summary(req['mode'], url, release, summary)
+              if unknown:
+                  log('معرّفات غير معروفة:', unknown)
+              if failed or unknown:
+                  log('فشلت:', failed, 'غير معروفة:', unknown)
+                  return 1
+              return 0
+
+
+          if __name__ == '__main__':
+              sys.exit(main())
+          __DALINY_EOF__
+          cat > tools/shards.json <<'__DALINY_EOF__'
+          {
+           "shards": [
+            {
+             "id": "baghdad",
+             "name": "بغداد",
+             "bbox": [
+              43.9,
+              32.8,
+              44.9,
+              33.8
+             ]
+            },
+            {
+             "id": "basra",
+             "name": "البصرة",
+             "bbox": [
+              46.4,
+              29.05,
+              48.6,
+              31.2
+             ]
+            },
+            {
+             "id": "nineveh",
+             "name": "نينوى",
+             "bbox": [
+              40.9,
+              35.2,
+              44.1,
+              37.4
+             ]
+            },
+            {
+             "id": "erbil",
+             "name": "أربيل",
+             "bbox": [
+              43.4,
+              35.7,
+              45.1,
+              37.2
+             ]
+            },
+            {
+             "id": "sulaymaniyah",
+             "name": "السليمانية",
+             "bbox": [
+              44.5,
+              34.6,
+              46.3,
+              36.3
+             ]
+            },
+            {
+             "id": "duhok",
+             "name": "دهوك",
+             "bbox": [
+              42.2,
+              36.5,
+              44.3,
+              37.4
+             ]
+            },
+            {
+             "id": "kirkuk",
+             "name": "كركوك",
+             "bbox": [
+              43.2,
+              34.8,
+              44.9,
+              35.9
+             ]
+            },
+            {
+             "id": "diyala",
+             "name": "ديالى",
+             "bbox": [
+              44.3,
+              33.2,
+              46.2,
+              34.7
+             ]
+            },
+            {
+             "id": "salahaddin",
+             "name": "صلاح الدين",
+             "bbox": [
+              42.9,
+              33.7,
+              44.5,
+              35.3
+             ]
+            },
+            {
+             "id": "anbar",
+             "name": "الأنبار",
+             "bbox": [
+              38.8,
+              30.6,
+              44.3,
+              34.8
+             ]
+            },
+            {
+             "id": "babil",
+             "name": "بابل",
+             "bbox": [
+              44.0,
+              32.0,
+              45.1,
+              33.3
+             ]
+            },
+            {
+             "id": "karbala",
+             "name": "كربلاء",
+             "bbox": [
+              43.2,
+              32.0,
+              44.5,
+              33.0
+             ]
+            },
+            {
+             "id": "najaf",
+             "name": "النجف",
+             "bbox": [
+              42.2,
+              29.5,
+              45.0,
+              32.5
+             ]
+            },
+            {
+             "id": "qadisiyah",
+             "name": "القادسية",
+             "bbox": [
+              44.3,
+              31.5,
+              45.6,
+              32.4
+             ]
+            },
+            {
+             "id": "muthanna",
+             "name": "المثنى",
+             "bbox": [
+              43.6,
+              29.0,
+              46.2,
+              31.6
+             ]
+            },
+            {
+             "id": "dhiqar",
+             "name": "ذي قار",
+             "bbox": [
+              45.6,
+              30.4,
+              47.2,
+              31.9
+             ]
+            },
+            {
+             "id": "maysan",
+             "name": "ميسان",
+             "bbox": [
+              46.5,
+              31.3,
+              47.9,
+              32.8
+             ]
+            },
+            {
+             "id": "wasit",
+             "name": "واسط",
+             "bbox": [
+              44.9,
+              32.0,
+              46.9,
+              33.5
+             ]
+            }
+           ]
+          }
+          __DALINY_EOF__
+          cat > tools/install_pmtiles.sh <<'__DALINY_EOF__'
+          #!/usr/bin/env bash
+          # يثبّت أداة pmtiles (go-pmtiles) على سيرفر GitHub Actions
+          set -uo pipefail
+          mkdir -p /tmp/pm
+          if gh release download --repo protomaps/go-pmtiles --pattern '*Linux_x86_64.tar.gz' --dir /tmp/pm --clobber; then
+            tar -xzf /tmp/pm/*Linux_x86_64.tar.gz -C /tmp/pm && sudo install -m 0755 /tmp/pm/pmtiles /usr/local/bin/pmtiles && echo "pmtiles installed from release"
+          fi
+          if ! command -v pmtiles >/dev/null 2>&1; then
+            echo "release download failed; building with go install"
+            GOBIN=/tmp/pm/bin go install github.com/protomaps/go-pmtiles@latest
+            sudo install -m 0755 /tmp/pm/bin/go-pmtiles /usr/local/bin/pmtiles
+          fi
+          pmtiles --help 2>&1 | head -3
+          df -h / | tail -1
+          python3 --version
+          __DALINY_EOF__
+          cat > tools/commit.sh <<'__DALINY_EOF__'
+          #!/usr/bin/env bash
+          # يحفظ مجلد bld/ بالمستودع (commit + push) مع إعادة المحاولة
+          set -u
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bld
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+          git commit -m "bld: ${1:-update}"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "pushed"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "push failed"
+          exit 1
+          __DALINY_EOF__
+
+      - name: Install pmtiles
+        run: bash tools/install_pmtiles.sh
+
+      - name: "1) debug sample (Hilla)"
+        id: s1
+        if: env.MODE == 'auto' || env.MODE == 'debug'
+        continue-on-error: true
+        env:
+          BLD_MODE: debug
+        run: python3 tools/bld_run.py
+
+      - name: "Commit 1"
+        if: always() && (env.MODE == 'auto' || env.MODE == 'debug')
+        run: bash tools/commit.sh "debug sample"
+
+      - name: "2) babil"
+        id: s2
+        if: env.MODE == 'auto' && steps.s1.outcome == 'success'
+        continue-on-error: true
+        env:
+          BLD_MODE: build
+          BLD_IDS: babil
+        run: python3 tools/bld_run.py
+
+      - name: "Commit 2"
+        if: always() && env.MODE == 'auto' && steps.s1.outcome == 'success'
+        run: bash tools/commit.sh "babil"
+
+      - name: "3) other governorates"
+        id: s3
+        if: env.MODE == 'auto' && steps.s2.outcome == 'success'
+        continue-on-error: true
+        env:
+          BLD_MODE: build
+          BLD_IDS: all
+          BLD_SKIP: babil
+        run: python3 tools/bld_run.py
+
+      - name: "Commit 3"
+        if: always() && env.MODE == 'auto' && steps.s2.outcome == 'success'
+        run: bash tools/commit.sh "other governorates"
+
+      - name: "Manual build"
+        id: s4
+        if: env.MODE == 'build'
+        continue-on-error: true
+        env:
+          BLD_MODE: build
+          BLD_IDS: ${{ github.event.inputs.ids }}
+        run: python3 tools/bld_run.py
+
+      - name: "Commit manual"
+        if: always() && env.MODE == 'build'
+        run: bash tools/commit.sh "manual build"
+
+      - name: Ask Pages to rebuild
+        if: always()
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "pages build request failed (non-fatal)"
+
+      - name: Fail if any stage failed
+        if: steps.s1.outcome == 'failure' || steps.s2.outcome == 'failure' || steps.s3.outcome == 'failure' || steps.s4.outcome == 'failure'
+        run: exit 1
